@@ -1,23 +1,22 @@
-/*jshint esversion: 6 */
+/*jshint esversion: 9 */
 
 const container = document.querySelector(".container");
 const addButton = document.createElement("button");
 addButton.textContent = "Add task";
 addButton.id = "addButton";
 
-function displayTasks() {
+async function displayTasks() {
   container.innerHTML = "";
-  Object.keys(localStorage)
-    .sort((a, b) => a - b)
-    .forEach((e) => {
-      displayTask(e, window.localStorage.getItem(e).slice(1, -1));
-    });
+
+  let res = await fetch("https://todobckend.herokuapp.com/");
+  let data = await res.json();
+  data.forEach((e) => displayTask(e._id, e.title));
 
   document.body.appendChild(addButton);
-  addButton.addEventListener("click", createNewTask);
+  addButton.addEventListener("click", addTask);
 }
 
-function displayTask(taskKey, taskValue) {
+function displayTask(taskId, taskValue) {
   addButton.remove();
   const taskContainer = document.createElement("div");
   container.appendChild(taskContainer);
@@ -28,7 +27,7 @@ function displayTask(taskKey, taskValue) {
   const taskTextInput = document.createElement("input");
   const textInputAtrributes = {
     type: "text",
-    id: taskKey,
+    id: taskId,
     name: "task",
     required: "true",
     minlength: "4",
@@ -62,9 +61,13 @@ function displayTask(taskKey, taskValue) {
 
   taskTextInput.addEventListener("keypress", (e) => {
     if (e.key == "Enter") {
-      if (e.target.value != "") {
+      if (e.target.id == "") {
+        createTask(e);
+        addTask();
+        addButton.remove();
+      } else if (e.target.value != "") {
         updateTask(e);
-        createNewTask();
+        addTask();
         addButton.remove();
       }
     }
@@ -73,33 +76,63 @@ function displayTask(taskKey, taskValue) {
     if (e.target.value == "") {
       taskContainer.remove();
       document.body.appendChild(addButton);
-      addButton.addEventListener("click", createNewTask);
+      addButton.addEventListener("click", addTask);
     } else {
       updateTask(e);
       document.body.appendChild(addButton);
-      addButton.addEventListener("click", createNewTask);
+      addButton.addEventListener("click", addTask);
     }
   });
 }
 
 function updateTask(e) {
-  localStorage.setItem(e.target.id, JSON.stringify(e.target.value));
+  fetch(`https://todobckend.herokuapp.com/${e.target.id}`, {
+    method: "PUT",
+    body: JSON.stringify({
+      title: e.target.value,
+    }),
+    headers: {
+      "Content-type": "application/json; charset=UTF-8",
+    },
+  }).then((response) => response.json());
+
+  // localStorage.setItem(e.target.id, JSON.stringify(e.target.value));
 }
+
+function createTask(e) {
+  fetch("https://todobckend.herokuapp.com/", {
+    method: "POST",
+    body: JSON.stringify({
+      title: e.target.value,
+    }),
+    headers: {
+      "Content-type": "application/json; charset=UTF-8",
+    },
+  })
+    .then((response) => response.json())
+    .then((data) => (e.target.id = data._id));
+}
+
 function removeTask(e) {
-  window.localStorage.removeItem(e.target.previousElementSibling.id);
+  fetch(
+    `https://todobckend.herokuapp.com/${e.target.previousElementSibling.id}`,
+    {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: null,
+    }
+  );
   e.target.parentElement.remove();
   document.body.appendChild(addButton);
-  addButton.addEventListener("click", createNewTask);
+  addButton.addEventListener("click", addTask);
 }
-function createNewTask() {
-  displayTask(
-    (parseInt(
-      Object.keys(localStorage)
-        .sort((a, b) => a - b)
-        .reverse()[0]
-    ) || 0) + 1,
-    ""
-  );
+
+async function addTask() {
+  let res = await fetch("https://todobckend.herokuapp.com/");
+  let data = await res.json();
+  displayTask("", "");
 }
 // Main program:
 
