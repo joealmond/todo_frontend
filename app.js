@@ -73,7 +73,11 @@ function displayTask(taskId, taskValue) {
     }
   });
   taskTextInput.addEventListener("blur", (e) => {
-    if (e.target.value == "") {
+    if (e.target.id == "") {
+      createTask(e);
+      document.body.appendChild(addButton);
+      addButton.addEventListener("click", addTask);
+    } else if (e.target.value == "") {
       taskContainer.remove();
       document.body.appendChild(addButton);
       addButton.addEventListener("click", addTask);
@@ -110,7 +114,7 @@ function createTask(e) {
     },
   })
     .then((response) => response.json())
-    .then((data) => (e.target.id = data._id));
+    .then((data) => (e.target.id = data.id));
 }
 
 function removeTask(e) {
