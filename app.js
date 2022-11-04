@@ -61,32 +61,38 @@ function displayTask(taskId, taskValue) {
 
   taskTextInput.addEventListener("keypress", (e) => {
     if (e.key == "Enter") {
-      if (e.target.id == "") {
+      taskTextInput.removeEventListener("blur", onBlur);
+      if (e.target.id == "" && e.target.value != "") {
         createTask(e);
         addTask();
         addButton.remove();
-      } else if (e.target.value != "") {
+      } else if (e.target.id != "" && e.target.value != "") {
         updateTask(e);
-        addTask();
-        addButton.remove();
+        taskTextInput.blur();
       }
     }
   });
-  taskTextInput.addEventListener("blur", (e) => {
-    if (e.target.id == "") {
+  function onBlur(e) {
+    if (e.target.id == "" && e.target.value != "") {
       createTask(e);
+      addTask();
+      addButton.remove();
+    } else if (e.target.id != "" && e.target.value != "") {
+      updateTask(e);
       document.body.appendChild(addButton);
       addButton.addEventListener("click", addTask);
-    } else if (e.target.value == "") {
+    } else if (e.target.id != "" && e.target.value == "") {
+      taskTextInput.focus();
+    } else if (e.target.id == "" && e.target.value == "") {
       taskContainer.remove();
       document.body.appendChild(addButton);
       addButton.addEventListener("click", addTask);
     } else {
-      updateTask(e);
       document.body.appendChild(addButton);
       addButton.addEventListener("click", addTask);
     }
-  });
+  }
+  taskTextInput.addEventListener("blur", onBlur);
 }
 
 function updateTask(e) {
